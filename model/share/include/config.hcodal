@@ -1,0 +1,129 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  definition of constants
+ */
+
+// Add the include statements to access the RISC-V opcodes, debug functions, and utilities
+
+#ifndef CONFIG_HCODAL_HG
+#define CONFIG_HCODAL_HG
+
+#include "config.hcodal"
+#include "opcodes.hcodal"
+#include "debug.hcodal"
+#include "utils.hcodal"
+
+// Debug functions
+#define dprintf(...) codasip_print(DEBUG_LEVEL, __VA_ARGS__)
+#define iprintf(...) codasip_info(INFO_LEVEL, __VA_ARGS__)
+#define wprintf(...) codasip_warning(WARNING_LEVEL, __VA_ARGS__)
+#define eprintf(...) codasip_error(FATAL_ERROR_LEVEL, __VA_ARGS__)
+
+// Defining RISCV parameters of this educational core
+#define RISCV_ARCH_32           (0b01 << 30)
+#define RISCV_STD_EXT           (1 << 8)
+#define RISCV_IMPLEMENTED       RISCV_ARCH_32 | RISCV_STD_EXT
+
+#define RISCV_16BIT_ALIGN       ~0x01
+#define RISCV_32BIT_ALIGN       ~0x03
+#define RISCV_IALIGNMENT        RISCV_32BIT_ALIGN
+
+// Configuration based on options selected via options.conf
+
+#define SYSCALL_ADDRESS (OPTION_BOOT_START + 0x10)
+
+// Program starting address
+#define BOOT_START              (OPTION_BOOT_START + 0x0)
+
+// Defines specifying the CPU General Processor Register (XPR) file
+#define RF_XPR_W                5   // defines the number of bits required to specify the size of the XPR 90902
+#define RF_XPR_SIZE             32  // Number of XPR registers
+
+
+#if defined(OPTION_CSR_ENABLED)
+
+// Define the constants for the Control Status Registers (CSRs)
+#define CSR_W                   32  // Width of the Control Status Registers (CSR)
+
+#endif
+
+// Define whether the CPU architecture is BIG or Little ENDIAN
+#define ENDIAN                  LITTLE // Endianness of data
+
+// Specify key parameters of the processor data memory architecture
+#define ADDR_W                  32  // Width of data memory address (32-bits)
+#define WORD_W                  32  // Number of bits of standard word width
+#define LAU_W                   8   // RISC-V defines the Least Addressable Unit as a single byte (8-bits)
+#define ADDR_OFFSET_W           clog2((uint32) WORD_W) / LAU_W) // number of bits to define LAU units in a WORD
+
+// Specify key parameters of the processor instruction memory architecture
+#define RISCV_INSTR_SIZE        4   // 32-bits or 4-bytes
+#define INSTR_W                 32  // Width of instruction memory address (32-bits)
+#define INSTR_SIZE              (INSTR_W/LAU_W) // Size of instruction in bytes (LAU)
+#define OPC_W                   17  // func7 + func3 + opcode
+#define OPCODE_W                7   // RISC-V Opcodes are defined by 7-bits
+
+// Specify immediates used in RISC-V Opcodes
+#define IMM5_W                  5   //  5-bit immediate
+#define IMM12_W                 12  // 12-bit immediate
+#define IMM20_W                 20  // 20-bit immediate
+
+// Address bus mask, address bits that define addressing a WORD
+#define BUS_MASK                (~0x3u) // upper 30-bits address a word
+
+// System defined constants
+#define UNUSED                  0
+
+// Allocate specific registers from the RISC-V general purpose register file to support the compiler
+
+#define STACK_POINTER       2
+#define FRAME_POINTER       8
+#define RETURN_ADDRESS      1
+#define FUNCTION_REG        10
+#define AUXILLARY           5
+
+#define EMULATION_REG_A     30
+#define EMULATION_REG_B     31
+
+// Definitions used to assist the creation of the isa instructions and/or emulation pseudo instructions
+#define ZERO_REG                0:bit[5]                // defining zero value over 5 bits, 0b00000
+#define RET_REG                 RETURN_ADDRESS:bit[5]   // Enables the Return Register address to be defined
+#define ZERO_IMM12              0:bit[12]               // defining zero value over 12 bits, 0b000000000000
+#define MINUS_ONE_IMM12         0xfff:bit[12]           // defining 12 one bits, 0b111111111111
+#define ONE_IMM12               1:bit[12]
+
+#define EMUL_REG_A              EMULATION_REG_A:bit[5]
+#define EMUL_REG_B              EMULATION_REG_B:bit[5]
+
+// In RISCV, register x0 will always be read as 0 and is read only.  Any RISCV arthimetic operation with the
+// desination register set to x0 can be considered a NOP OPERATION.  For this RISCV design, a NOP will be
+// emulated by performing an ADD immediate whose source and destinations registers are x0 with an immediate
+// field set to 0
+
+#define NOP_OPERATION           (uint32)0b00000000000000000000000000010011
+
+#define HALF_W_ALIGN            1               // A shift 1 to the left will half-word align an offset address
+
+#endif
+

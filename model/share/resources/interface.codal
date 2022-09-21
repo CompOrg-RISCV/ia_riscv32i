@@ -1,0 +1,103 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  interfaces
+ */
+
+#include "config.hcodal"
+
+// Interface is used for bus and memory connections.  It allows fast prototying of a processor by hiding the bus interface implementations
+
+// This design has separate memory interfaces for instruction and data accesses
+
+// Instruction access memory interface
+
+#ifndef OPTION_CACHES_ENABLED
+interface if_fetch          // if refers to Interface element and fetch refers to instruction memory interface
+{
+    // The bit specifiers has 3 values:
+    //     - address buswidth
+    //     - instruction word bitwidth
+    //     - byte size (byte size is equal to the smallest addressable unit
+    bits = {ADDR_W, WORD_W, LAU_W};
+
+    // The type defines which interface is the bus master.  Will be defining the bus as AMBA 3
+    //  For the AHB-Lite Protocol specification, the processor core behaves as the bus master.
+
+    type = AHB3_LITE:MASTER;
+
+    // Define instruction space as read-only
+
+    flag = R;
+
+    // Setting endianness of the bus interface to match the processor defined endianness defined in config.hcodal
+
+    endianness = ENDIAN;
+
+    // Specifications allow instruction/data and address alignment
+
+    alignment = {
+        // Derives the address boundaries - number of Least Significant Bits (LSB) which must be zero
+        address = WORD_W;
+
+        // Data is a list of bitwidth which can be access in a single transaction
+        // Instructions are always accessed via words (32-bits / 4-bytes)
+        data = {WORD_W};
+    };
+};
+
+// Data access memory interface
+
+interface ldst           // if refers to Interface element and ldst refers to load/store (data) space
+{
+    // The bit specifiers has 3 values:
+    //     - address buswidth
+    //     - instruction word bitwidth
+    //     - byte size (byte size is equal to the smallest addressable unit
+    bits = {ADDR_W, WORD_W, LAU_W};
+
+    // The type defines which interface is the bus master.  Will be defining the bus as AMBA 3
+    //  For the AHB-Lite Protocol specification, the processor core behaves as the bus master.
+
+    type = AHB3_LITE:MASTER;
+
+    // Define data space as read / write accesses
+
+    flag = RW;
+
+    // Setting endianness of the bus interface to match the processor defined endianness defined in config.hcodal
+
+    endianness = ENDIAN;
+
+    // Specifications allow instruction/data and address alignment
+
+    alignment = {
+        // Derives the address boundaries - number of Least Significant Bits (LSB) which must be zero
+        address = WORD_W;
+
+        // Data is a list of bitwidth which can be access in a single transaction
+        // RISC-V specifies 1-byte (8-bits), half-word (16-bits), and word (32-bits) data accesses
+        data = {LAU_W, 2*LAU_W, WORD_W};
+    };
+};
+#endif

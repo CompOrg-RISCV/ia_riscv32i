@@ -1,0 +1,220 @@
+/**
+ * Codasip s.r.o.
+ * 
+ * CONFIDENTIAL 
+ *
+ * Copyright 2022 Codasip s.r.o.
+ * 
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of 
+ * Codasip s.r.o. and its suppliers, if any. 
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to 
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the 
+ * technical concepts may be patent pending.  
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this 
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained 
+ * in Codasip license agreement under which you obtained this file.
+ */
+
+/* -------------------------------------------------------------------------------------------------
+ *
+ *                              RISCV - instruction operands
+ *
+ * -------------------------------------------------------------------------------------------------
+ */
+
+#include "common_enums.hcodal"
+#include "config.hcodal"
+#include "utils.hcodal"
+
+// -------------------------------------------------------------------------------------------------
+// Register operand element
+// -------------------------------------------------------------------------------------------------
+
+// Elements with assembler and binary sections are used to describe instruction operands.
+// Registers, immediate operands, conditional predicate and addressing modes are described.
+
+
+set xpr_general : register_class(rf_xpr);
+set xpr_all;
+
+element x_0
+{
+    assembly{STRINGIZE(x0)};
+    binary  {0:bit[5]};
+    return{0};
+};
+
+element x_0_alias : assembler_alias(x_0)
+{
+    assembly { "zero" };
+    binary { 0:bit[5] };
+};
+
+DEF_REG_ALIAS(1, "ra")       // return address
+
+DEF_REG_ALIAS(2, "sp")       // stack pointer
+
+DEF_REG_ALIAS(3, "gp")        // global pointer
+DEF_REG_ALIAS(4, "tp")        // thread pointer
+DEF_REG_ALIAS(5, "t0")        // temporary 0
+DEF_REG_ALIAS(6, "t1")        // temporary 1
+DEF_REG_ALIAS(7, "t2")        // temporary 2
+DEF_REG_DOUBLE_ALIAS(8, "fp", "s0") // frame pointer / saved register 0
+DEF_REG_ALIAS(9, "s1")        // saved register 1
+DEF_REG_ALIAS(10, "a0")       // function argument 0 / return value 0
+DEF_REG_ALIAS(11, "a1")       // function argument 1 / return value 1
+DEF_REG_ALIAS(12, "a2")       // function argument 2
+DEF_REG_ALIAS(13, "a3")       // function argument 3
+DEF_REG_ALIAS(14, "a4")       // function argument 4
+DEF_REG_ALIAS(15, "a5")       // function argument 5
+
+
+DEF_REG_ALIAS(16, "a6")       // function argument 6
+DEF_REG_ALIAS(17, "a7")       // function argument 7
+DEF_REG_ALIAS(18, "s2")       // saved register 2
+DEF_REG_ALIAS(19, "s3")       // saved register 3
+DEF_REG_ALIAS(20, "s4")       // saved register 4
+DEF_REG_ALIAS(21, "s5")       // saved register 5
+DEF_REG_ALIAS(22, "s6")       // saved register 6
+DEF_REG_ALIAS(23, "s7")       // saved register 7
+DEF_REG_ALIAS(24, "s8")       // saved register 8
+DEF_REG_ALIAS(25, "s9")       // saved register 9
+DEF_REG_ALIAS(26, "s10")      // saved register 10
+DEF_REG_ALIAS(27, "s11")      // saved register 11
+DEF_REG_ALIAS(28, "t3")       // temporary 3
+DEF_REG_ALIAS(29, "t4")       // temporary 4
+DEF_REG_ALIAS(30, "t5")       // temporary 5
+DEF_REG_ALIAS(31, "t6")       // temporary 6
+
+// set construct allows to denote a group with a common identifier.  In the below xpr_general set, all
+// registers except reg0 can be used.  xpr_all set includes reg0
+
+set xpr_all += xpr_general, x_0, x_0_alias;
+
+
+#if defined(OPTION_CSR_ENABLED)
+
+/*
+ * Defining the set of Control Status Registers (CSR)
+ */
+
+set csr_regs: operand(PROFILER);
+
+DEF_REG_CSR(mstatus     , "mstatus",   CSR_MSTATUS  )
+DEF_REG_CSR(misa        , "misa",      CSR_MISA     )
+DEF_REG_CSR(mie         , "mie",       CSR_MIE      )
+DEF_REG_CSR(mtvec       , "mtvec",     CSR_MTVEC    )
+DEF_REG_CSR(mscratch    , "mscratch",  CSR_MSCRATCH )
+DEF_REG_CSR(mepc        , "mepc",      CSR_MEPC     )
+DEF_REG_CSR(mcause      , "mcause",    CSR_MCAUSE   )
+DEF_REG_CSR(mtval       , "mtval",     CSR_MTVAL    )
+DEF_REG_CSR(mip         , "mip",       CSR_MIP      )
+DEF_REG_CSR(mvendorid   , "mvendorid", CSR_MVENDORID)
+DEF_REG_CSR(marchid     , "marchid",   CSR_MARCHID  )
+DEF_REG_CSR(mimpid      , "mimpid",    CSR_MIMPID   )
+DEF_REG_CSR(mhartid     , "mhartid",   CSR_MHARTID  )
+
+#endif
+
+// Instructions that support an immediate operand, require the definitaion of immediate elements
+
+// In RISCV, 5-bit immediates are used by RTYPE immediate shift instructions
+element uimm5       // unsigned 5-bit immediate
+{
+    unsigned attribute bit[IMM5_W] value;
+
+    assembly {value};
+    binary {value};
+
+    return {value};
+};
+
+// In RISCV, 12-bit immediates are used by I, S, and B-type instructions
+
+element simm12       // signed 12-bit immediate
+{
+    signed attribute bit[IMM12_W] value;
+
+    assembly {value};
+    binary {value};
+
+    return {value};
+};
+
+// In RISCV, 20-bit immediates are used by U and J-Type instructions
+
+//element simm20       // signed 20-bit immediate
+//{
+//    signed attribute bit[IMM20_W] value;
+//
+//    assembly {value};
+//    binary {value};
+//
+//    return {value};
+//};
+
+element uimm20       // signed 20-bit immediate
+{
+    unsigned attribute bit[IMM20_W] value;
+
+    assembly {value};
+    binary {value};
+
+    return {value};
+};
+
+///////////////////////////////////////////////////////////////////////////////
+//                     relative address operands
+/////////////////////////////////////////////////////////////////////////////
+
+element relative_addr12
+{
+    signed attribute bit[12] addr12
+    {
+        label = true;
+        encoding = (addr12 - current_address) >> HALF_W_ALIGN;
+        decoding = ((int13)addr12 << HALF_W_ALIGN) + current_address;
+    };
+    assembly {addr12};
+    binary{addr12};
+    return{(uint32)addr12 << HALF_W_ALIGN};
+};
+
+element relative_addr20
+{
+    signed attribute bit[20] addr20
+    {
+        label = true;
+        encoding = (addr20 - current_address) >> HALF_W_ALIGN;
+        decoding = ((int21)addr20 << HALF_W_ALIGN) + current_address;
+    };
+    // address is relative to the address of the following instruction
+    assembly {addr20};
+    binary {addr20};
+    return {(int32)addr20 << HALF_W_ALIGN};
+};
+
+/// 32bit Imm
+//element rel_addr32
+//{
+//    signed attribute bit[32] addr
+//    {
+//        label = true;
+//        // The below encoding takes into account if the lower 12-bits would require
+//        // sign extension.
+//        encoding = ((addr - current_address) & 0x800) ?
+//            ((addr - current_address) + 0x1000) & 0xFFFFFFFFu :
+//            (addr - current_address) & 0xFFFFFFFFu;
+//        decoding = ((addr + current_address) & 0x800) ?
+//            ((addr + current_address) + 0x1000) :
+//            (addr + current_address);
+//    };
+//    // address is relative to the address of the following instruction
+//    assembly { addr };
+//    binary { addr };
+//    return { addr };
+//};

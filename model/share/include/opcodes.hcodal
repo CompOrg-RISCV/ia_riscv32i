@@ -1,0 +1,132 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  instruction operation codes
+ */
+
+#ifndef OPCODES_HCODAL_HG
+#define OPCODES_HCODAL_HG
+
+// RV32I Base Integer Instruction Set, Version 2.1
+
+// U-TYPE Opcodes
+// opcode (bits 0:6)
+enum UTYPE_OPCODES : uint7 {
+    UTYPE_LUI   = 0b0110111,
+    UTYPE_AUIPC = 0b0010111
+};
+
+// J-TYPE Opcodes
+// opcode (bits 0:6)
+enum JTYPE_OPCODES : uint7 {
+    JTYPE_JAL   = 0b1101111
+};
+
+// B-Type Opcodes and associated func3 codes
+// func3(bits 12:14) | opcode (bits 0:6)
+enum BTYPE_OPCODES : uint10 {
+    BTYPE_BEQ   = 0b0001100011,
+    BTYPE_BNE   = 0b0011100011,
+    BTYPE_BLT   = 0b1001100011,
+    BTYPE_BGE   = 0b1011100011,
+    BTYPE_BLTU  = 0b1101100011,
+    BTYPE_BGEU  = 0b1111100011
+};
+
+// R-Type 2-argument Opcodes
+// func7(bits(bits 25:31) | func3(bits 12:14) | opcode (bits 0:6)
+enum RTYPE_OPCODES : uint17 {
+    RTYPE_ADD   = 0b00000000000110011,
+    RTYPE_SUB   = 0b01000000000110011,
+    RTYPE_SLL   = 0b00000000010110011,
+    RTYPE_SLT   = 0b00000000100110011,
+    RTYPE_SLTU  = 0b00000000110110011,
+    RTYPE_XOR   = 0b00000001000110011,
+    RTYPE_SRL   = 0b00000001010110011,
+    RTYPE_SRA   = 0b01000001010110011,
+    RTYPE_OR    = 0b00000001100110011,
+    RTYPE_AND   = 0b00000001110110011,
+    RTYPE_SLLI  = 0b00000000010010011,
+    RTYPE_SRLI  = 0b00000001010010011,
+    RTYPE_SRAI  = 0b01000001010010011
+};
+
+// I-Type Immediate Opcodes (format)
+// func3(bits 12:14) | opcode (bits 0:6)
+enum ITYPE_OPCODES : uint10 {
+    ITYPE_ADDI  = 0b0000010011,
+    ITYPE_SLTI  = 0b0100010011,
+    ITYPE_SLTIU = 0b0110010011,
+    ITYPE_XORI  = 0b1000010011,
+    ITYPE_ORI   = 0b1100010011,
+    ITYPE_ANDI  = 0b1110010011,
+
+
+    ITYPE_JALR  = 0b0001100111,
+    ITYPE_LB    = 0b0000000011,
+    ITYPE_LH    = 0b0010000011,
+    ITYPE_LW    = 0b0100000011,
+    ITYPE_LBU   = 0b1000000011,
+    ITYPE_LHU   = 0b1010000011
+};
+
+
+// S-Type Opcodes and associated func3 codes
+// func3(bits 12:14) | opcode (bits 0:6)
+enum STYPE_OPCODES : uint10 {
+    STYPE_SB    = 0b0000100011,
+    STYPE_SH    = 0b0010100011,
+    STYPE_SW    = 0b0100100011
+};
+
+// Miscellaneous Opcodes and associated func3 codes
+enum MISC10_OPCODES : uint10 {
+    MISC_OPCODE_FENCE    = 0b0000001111
+};
+
+enum MISC32_OPCODES : uint32 {
+    MISC_OPCODE_ECALL    = 0b00000000000000000000000001110011,
+    MISC_OPCODE_EBREAK   = 0b00000000001000000000000001110011
+};
+
+
+#if defined(OPTION_CSR_ENABLED)
+
+enum CSR_OPCODES : uint10 {
+    CSR_CSRRW   = 0b0011110011,
+    CSR_CSRRS   = 0b0101110011,
+    CSR_CSRRC   = 0b0111110011,
+    CSR_CSRRWI  = 0b1011110011,
+    CSR_CSRRSI  = 0b1101110011,
+    CSR_CSRRCI  = 0b1111110011
+};
+#endif
+
+// J-TYPE Opcodes used for Codasip Simulator and not a apart of RISCV instruction set
+// opcode (bits 0:6)
+enum SIMULATION_OPCODES : uint7 {
+    JTYPE_HALT      = 0b0111111,
+    JTYPE_SYSCALL   = 0b1011111
+};
+
+#endif

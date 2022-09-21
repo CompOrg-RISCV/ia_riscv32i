@@ -1,0 +1,119 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  compiler settings
+ */
+
+#include "config.hcodal"
+settings
+{
+    compiler
+    {
+        pointer_size = ADDR_W;
+        interrupt_handler_alignment = 4;
+        stack_pointer = rf_xpr[STACK_POINTER];      // Reserve register for stack pointer
+        base_pointer  = rf_xpr[FRAME_POINTER];      // Reserve register for frame pointer
+        return_address = rf_xpr[RETURN_ADDRESS];    // Reserve register for return address
+        function_result = {                         // Reserve registers to return a function value
+            rf_xpr[FUNCTION_REG],
+            rf_xpr[FUNCTION_REG + 1],
+            rf_xpr[FUNCTION_REG + 2],
+            rf_xpr[FUNCTION_REG + 3],
+            rf_xpr[FUNCTION_REG + 4],
+            rf_xpr[FUNCTION_REG + 5],
+            rf_xpr[FUNCTION_REG + 6],
+            rf_xpr[FUNCTION_REG + 7],
+        };
+        function_params = {                         // Reserve registers to pass function parameters
+            rf_xpr[FUNCTION_REG],
+            rf_xpr[FUNCTION_REG + 1],
+            rf_xpr[FUNCTION_REG + 2],
+            rf_xpr[FUNCTION_REG + 3],
+            rf_xpr[FUNCTION_REG + 4],
+            rf_xpr[FUNCTION_REG + 5],
+            rf_xpr[FUNCTION_REG + 6],
+            rf_xpr[FUNCTION_REG + 7],
+        };
+
+        unused_registers = {
+            rf_xpr[3],
+            rf_xpr[4],
+            /* need for emulations:*/
+            rf_xpr[EMULATION_REG_A],
+            rf_xpr[EMULATION_REG_B],
+        };
+
+        legal_types = { int32 };
+
+        reg_alloc_order = {xpr_general, "true",
+            rf_xpr[8 ],
+            rf_xpr[9 ],
+            rf_xpr[15],
+            rf_xpr[14],
+            rf_xpr[13],
+            rf_xpr[12],
+            rf_xpr[11],
+            rf_xpr[10],
+            rf_xpr[1 ],
+            rf_xpr[3 ],
+            rf_xpr[4 ],
+            rf_xpr[5 ],
+            rf_xpr[6 ],
+            rf_xpr[7 ],
+            rf_xpr[16],
+            rf_xpr[17],
+            rf_xpr[18],
+            rf_xpr[19],
+            rf_xpr[20],
+            rf_xpr[21],
+            rf_xpr[22],
+            rf_xpr[23],
+            rf_xpr[24],
+            rf_xpr[25],
+            rf_xpr[26],
+            rf_xpr[27],
+            rf_xpr[29],
+        };
+
+        callee_saved = {
+            rf_xpr[9],
+            rf_xpr[18],
+            rf_xpr[19],
+            rf_xpr[20],
+            rf_xpr[21],
+            rf_xpr[22],
+            rf_xpr[23],
+            rf_xpr[24],
+            rf_xpr[25],
+            rf_xpr[26],
+            rf_xpr[27]
+        };
+
+    };
+
+    assembler
+    {
+        new_line_delimiter = {";"};
+        comment_prefix = {"#"};
+    };
+};

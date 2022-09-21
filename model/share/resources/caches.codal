@@ -1,0 +1,98 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  architectural resources
+ */
+
+#include "config.hcodal"
+#include "caches.hcodal"
+
+#ifdef OPTION_CACHES_ENABLED
+cache idcache
+{
+    type = ALL;
+    base = 0x00;
+
+    program
+    {
+        linesize = ICACHE_LINE_SIZE;
+        numways = ICACHE_SETS;
+        size = ICACHE_SIZE;
+
+        interface if_icache
+        {
+            bits = { ADDR_W, WORD_W, LAU_W };
+            type = AHB3_LITE:SLAVE;
+            flag = R;
+            endianness = ENDIAN;
+            alignment = {
+                address = WORD_W;
+                data = { WORD_W };
+            };
+        };
+        interface if_fetch_master
+        {
+            bits = { ADDR_W, WORD_W, LAU_W };
+            type = AHB3_LITE:MASTER;
+            flag = R;
+            endianness = ENDIAN;
+            alignment = {
+                address = WORD_W;
+                data = { WORD_W };
+            };
+        };
+    };
+    data
+    {
+        linesize = DCACHE_LINE_SIZE;
+        numways = DCACHE_SETS;
+        size = DCACHE_SIZE;
+
+        interface if_dcache
+        {
+            bits = { ADDR_W, WORD_W, LAU_W };
+            type = AHB3_LITE:SLAVE;
+            flag = RW;
+            endianness = ENDIAN;
+            alignment = {
+                address = WORD_W;
+                data = { LAU_W, 2*LAU_W, WORD_W };
+            };
+        };
+        interface if_ldst_master
+        {
+            bits = { ADDR_W, WORD_W, LAU_W };
+            type = AHB3_LITE:MASTER;
+            flag = RW;
+            endianness = ENDIAN;
+            alignment = {
+                address = WORD_W;
+                data = { LAU_W, 2*LAU_W, WORD_W };
+            };
+        };
+    };
+};
+connect unified_memory.if_fetch => idcache.if_fetch_master;
+connect unified_memory.if_data => idcache.if_ldst_master;
+#endif
+

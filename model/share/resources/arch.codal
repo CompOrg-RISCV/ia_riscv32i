@@ -1,0 +1,121 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  architectural resources
+ */
+
+#include "config.hcodal"
+#include "common_enums.hcodal"
+
+// This file is used to define/create architectural (hardware) elements of the Central Processing Unit (CPU)
+
+// Define/Create Program Counter
+// pc at the start of the below declaration defines this register as the Central Processing Unit (CPU)
+// Program Counter (pc)
+
+pc register bit[WORD_W] r_pc
+{
+    default = OPTION_BOOT_START;
+};
+
+// Define/Create  CPU register file
+
+arch register_file bit[WORD_W] rf_xpr
+{
+    dataport src1, src2 {flag = R;};
+    dataport wrt0 {flag = W;};
+    size = RF_XPR_SIZE;
+    reset = true;
+    default = 0;
+};
+
+// Address space in a processor is an abstract representation of memory.  Most processors have only one address space for
+// both instruction and data memory accesses, but or Harvard architectures, instruction and data address spaces are separate
+// The address space definition is used for assembler, disassembler, and C compiler generation for several reasons such
+// as the assembler needs to know where the code and data spaces should be placed
+
+// This RISC-V implementation has a unified address space for both instructions and data memory
+
+// Define address spaces
+
+address_space as_all
+{
+    // The same as the interfaces defined in the interface module, if_fetch and if_ldst memories
+    bits = {ADDR_W, WORD_W, LAU_W};
+
+    // List of all interfaces that are defined in this address_space element
+    interfaces = {
+#ifdef OPTION_CACHES_ENABLED
+        PROGRAM : idcache.if_icache,      // Associate instruction cache interface with Instruction/Program accesses
+        DATA : idcache.if_dcache          // Associate data cache interface with Data accesses
+#else
+        PROGRAM : if_fetch,         // Associate instruction cache interface with Instruction/Program accesses
+        DATA :    ldst              // Associate data cache interface with Data accesses
+#endif
+    };
+
+    // Type specifies how this address space is used, in this case the address space is used for both program and data (ALL).
+    // Other options are PROGRAM and DATA.
+    type = ALL;
+
+    // Memory organization endianness of the address space must be the same as in the used memory interfaces
+    endianness = ENDIAN;
+};
+
+// Some operations will require more than one clock cycle to complete.  A load operation takes a minimum of two clock cycles,
+// one clock cycle to provide the memory subsystem with the data address and the second cycle to provide the data from
+// the memory to the Central Processing Unit.
+//
+// A special class (sc) is required to be created to inform the system and the compiler that the memory access will be a
+// multi-cycle operation.  The below latency information can be used by the compiler to optimize the generated RISCV
+// instruction sequence.  For example, if the RISCV instruction immediately after the load requires the result of the load,
+// the Central Processing Unit (CPU) pipeline will need to stall for one clock cycle to enable the load to complete before
+// the following operation operation that requires the load can proceed.  With knowledge of this data dependency, the compiler
+// can insert an instruction immediately following the load that does not require the load result and thus not require
+// the CPU to stall for the load to complete, no data dependency
+
+schedule_class sc_load
+{
+    latency = 2;
+};
+
+
+#if defined(OPTION_CSR_ENABLED)
+
+// Control and Status architectural registers
+
+arch register bit[CSR_W] r_csr_mvendorid      {aacr = CSR_MVENDORID; default = 0;                 };
+arch register bit[CSR_W] r_csr_marchid        {aacr = CSR_MARCHID  ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mimpid         {aacr = CSR_MIMPID   ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mhartid        {aacr = CSR_MHARTID  ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mstatus        {aacr = CSR_MSTATUS  ; default = 0;                 };
+arch register bit[CSR_W] r_csr_misa           {aacr = CSR_MISA     ; default = RISCV_IMPLEMENTED; };
+arch register bit[CSR_W] r_csr_mie            {aacr = CSR_MIE      ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mtvec          {aacr = CSR_MTVEC    ; default = OPTION_BOOT_START; };
+arch register bit[CSR_W] r_csr_mscratch       {aacr = CSR_MSCRATCH ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mepc           {aacr = CSR_MEPC     ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mcause         {aacr = CSR_MCAUSE   ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mtval          {aacr = CSR_MTVAL    ; default = 0;                 };
+arch register bit[CSR_W] r_csr_mip            {aacr = CSR_MIP      ; default = 0;                 };
+
+#endif

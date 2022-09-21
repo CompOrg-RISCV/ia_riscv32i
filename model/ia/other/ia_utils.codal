@@ -1,0 +1,273 @@
+/*
+ * Codasip s.r.o.
+ * 
+ * CONFIDENTIAL 
+ *
+ * Copyright 2022 Codasip s.r.o.
+ * 
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of 
+ * Codasip s.r.o. and its suppliers, if any. 
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to 
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the 
+ * technical concepts may be patent pending.  
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this 
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained 
+ * in Codasip license agreement under which you obtained this file.
+ */
+
+#include "common_enums.hcodal"
+#include "config.hcodal"
+#include "debug.hcodal"
+
+
+// Create the utility fnctions to access the general purpose registers
+// General Purpose Register (xpr) read function.  RISC-V, xpr_0 always returns 0
+inline uint32 rf_xpr_read(const uint5 index)
+{
+    uint32 value;
+
+    // The register field is accessed in the same way as a C array
+    if (index != 0) value = rf_xpr[index];      // read value of non 0 register
+    else value = 0;                             // reg 0 always returns 0
+
+    dprintf("rf_xpr[%2d] -> %08x ", index, value);
+
+    return value;
+}
+
+// General Purpose Register (xpr) write function.  RISC-V, write to xpr_0 do not change the
+// value of the 0 register that is defined as a read-only register of value 0
+inline void rf_xpr_write(const uint32 value, const uint5 index)
+{
+    if(index != 0) rf_xpr[index] = value;
+    dprintf("rf_xpr[%2d] <- %08x ", index, value);
+}
+
+
+// A load function is developed to support the RISCV byte, halfword, and word load operations.  This function enables
+// the simulation of the memory subsystem
+
+uint32 load(const uint32 opc, const uint32 address)
+{
+    uint32 result, byte_count;
+    uint1 cache_resp;
+
+    switch (opc){
+        case ITYPE_LW:
+            byte_count = 4;         // a RISCV32I standard load is a 32-bit word or 4-bytes
+            break;
+        case ITYPE_LB:              // If the LB case statement is valid, it flows into the
+        case ITYPE_LBU:             // the LBU case statement
+            byte_count = 1;
+            break;
+        case ITYPE_LH:              // Halfword accesses is equivalent to 2-bytes
+        case ITYPE_LHU:
+            byte_count = 2;
+            break;
+        default:
+            byte_count = 0;
+//            eprintf("Default case: %d", opc);
+            break;
+    }
+
+    // Data Interface read
+#ifdef OPTION_CACHES_ENABLED
+    result = idcache.if_dcache.read(address, byte_count, cache_resp, pma_hprot(address, CP_AHB_DATA_ACCESS), CP_AHB_UNLOCK);
+    dprintf("load [%08x] ", address);
+#else
+    result = ldst.read(address, byte_count, cache_resp, pma_hprot(address, CP_AHB_DATA_ACCESS), CP_AHB_UNLOCK);
+#endif
+    switch (opc) {
+        case ITYPE_LB:
+            return (int32)(int8) result;        // sign extend a signed byte load operation
+        case ITYPE_LH:
+            return (int32)(int16) result;       // sign extend a signed halfword load operation
+        case ITYPE_LBU:                         // Unsigned byte and halfword loads do not
+        case ITYPE_LHU:                         // require sign extension and can result in
+        case ITYPE_LW:                          // immediate return
+            return result;
+        default:
+            byte_count = 0;
+//            eprintf("Default case: %d", opc);
+            return byte_count;
+            break;
+    }
+}
+
+// A store function is developed to support the RISCV byte, halfword, and word load operations.  This function enables
+// the simulation of the memory subsystem
+
+void store(const uint32 opc, const uint32 address, const uint32 result)
+{
+    uint32 byte_count;
+    uint1 cache_resp;
+
+    switch (opc) {
+        case STYPE_SB:                      // Number of bytes per store operation.  For SB, byte store, 1-byte operation
+            byte_count = 1;
+            break;
+        case STYPE_SH:                      // For SH, halfword store, 2-byte operation
+            byte_count = 2;
+            break;
+        case STYPE_SW:
+            byte_count = 4;                 // for SW, word store, 4-byte operation
+            break;
+        default:
+            byte_count = 0;
+//            eprintf("Default case: %d", opc);
+            break;
+    }
+
+    // Data interface write
+#ifdef OPTION_CACHES_ENABLED
+    idcache.if_dcache.write(result, address, byte_count, cache_resp, pma_hprot(address, CP_AHB_DATA_ACCESS), CP_AHB_UNLOCK);
+    dprintf("st %08x -> [%08x] ", result, address);
+#else
+    ldst.write(result, address, byte_count, cache_resp, pma_hprot(address, CP_AHB_DATA_ACCESS), CP_AHB_UNLOCK);
+    dprintf("st %08x -> [%08x] ", result, address);
+#endif
+}
+
+// To enable conditional branches and uniconditional jumps, there must be a function to obtain the current Program Counter (pc)
+// and a second function to update
+
+// Function to return the current Program Counter (pc)
+inline uint32 read_pc(void)
+{
+    return r_pc;
+}
+
+// Function to write a new value into the Program Counter (pc)
+inline void write_pc(const uint32 value)
+{
+    r_pc = value;
+    dprintf("Jumping to 0x%x", value);
+}
+
+/*
+ * Utilities to perform the CSR operations
+ */
+
+/*
+ * An additional bit is appended to the return value which will indicate whether the CSR operation passed (0) or failed (1)
+ */
+
+#if defined(OPTION_CSR_ENABLED)
+uint33 csr_operation(const uint3 op, const uint12 csr, const int32 data_in) {
+
+   uint32 csr_data_read, csr_data_result;
+   bool fail;
+
+   fail = false;
+
+   switch (csr) {
+       case CSR_MVENDORID:
+           csr_data_read = r_csr_mvendorid;
+           break;
+       case CSR_MARCHID:
+           csr_data_read = r_csr_marchid;
+           break;
+       case CSR_MIMPID:
+           csr_data_read = r_csr_mimpid;
+           break;
+       case CSR_MHARTID:
+           csr_data_read = r_csr_mhartid;
+           break;
+       case CSR_MSTATUS:
+           csr_data_read = r_csr_mstatus;
+           break;
+       case CSR_MISA:
+           csr_data_read = r_csr_misa;
+           break;
+       case CSR_MIE:
+           csr_data_read = r_csr_mie;
+           break;
+       case CSR_MTVEC:
+           csr_data_read = r_csr_mtvec;
+           break;
+       case CSR_MSCRATCH:
+           csr_data_read = r_csr_mscratch;
+           break;
+       case CSR_MEPC:
+           csr_data_read = r_csr_mepc;
+           break;
+       case CSR_MCAUSE:
+           csr_data_read = r_csr_mcause;
+           break;
+       case CSR_MTVAL:
+           csr_data_read = r_csr_mtval;
+           break;
+       case CSR_MIP:
+           csr_data_read = r_csr_mip;
+           break;
+       default:
+           fail = true;
+           csr_data_read = 0;
+           break;
+   }
+
+   switch (op) {
+       case CSR_OP_CSRRW:
+       case CSR_OP_CSRRWI:
+           csr_data_result = data_in;
+           break;
+       case CSR_OP_CSRRS:
+       case CSR_OP_CSRRSI:
+           csr_data_result = csr_data_read | data_in;
+           break;
+       case CSR_OP_CSRRC:
+       case CSR_OP_CSRRCI:
+           csr_data_result = csr_data_read & ~data_in;
+           break;
+       default:
+           csr_data_result = 0;
+           fail = true;
+           break;
+   }
+
+   switch (csr) {
+       // MVENDORID, MARCHID, MIMPID, MHARTID are read-only registers so no update via CSR instructions
+       case CSR_MVENDORID:
+       case CSR_MARCHID:
+       case CSR_MIMPID:
+       case CSR_MHARTID:
+           break;
+       case CSR_MSTATUS:
+           r_csr_mstatus = csr_data_result;
+           break;
+       case CSR_MISA:       // In this implementation, the MISA is set by default and is not configurable
+           break;
+       case CSR_MIE:
+           r_csr_mie = csr_data_result;
+           break;
+       case CSR_MTVEC:
+           r_csr_mtvec = csr_data_result;
+           break;
+       case CSR_MSCRATCH:
+           r_csr_mscratch = csr_data_result;
+           break;
+       case CSR_MEPC:
+           r_csr_mepc = csr_data_result & RISCV_IALIGNMENT;
+           break;
+       case CSR_MCAUSE:
+           r_csr_mcause = csr_data_result;
+           break;
+       case CSR_MTVAL:
+           r_csr_mtval = csr_data_result;
+           break;
+       case CSR_MIP:
+           r_csr_mip = csr_data_result;
+           break;
+       default:
+           fail = true;
+           break;
+   }
+
+   // Return value is put together by concatenating the fail bit in front of the result value
+   return fail :: csr_data_read;
+}
+#endif

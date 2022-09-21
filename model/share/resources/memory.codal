@@ -1,0 +1,54 @@
+/**
+ * Codasip s.r.o.
+ *
+ * CONFIDENTIAL
+ *
+ * Copyright 2022 Codasip s.r.o.
+ *
+ * All Rights Reserved.
+ *
+ * NOTICE: All information contained in this file, is and shall remain the property of
+ * Codasip s.r.o. and its suppliers, if any.
+ *
+ * The intellectual and technical concepts contained herein are confidential and proprietary to
+ * Codasip s.r.o. and are protected by trade secret and copyright law.  In addition, elements of the
+ * technical concepts may be patent pending.
+ *
+ * This file is part of the Codasip Studio product. No part of the Studio product, including this
+ * file, may be use, copied, modified, or distributed except in accordance with the terms contained
+ * in Codasip license agreement under which you obtained this file.
+ *
+ *  \file
+ *  \author Codasip
+ *  \date   15.04.2019
+ *  \brief  architectural resources
+ */
+
+#include "config.hcodal"
+#include "caches.hcodal"
+
+#ifdef OPTION_CACHES_ENABLED
+memory unified_memory {
+    // memory size in LAU (Bytes)
+    size = OPTION_MEMORY_SIZE;
+    latencies = { {READ_1ST_LATENCY, READ_SUB_LATENCY}, {WRITE_1ST_LATENCY, READ_SUB_LATENCY}};
+
+    // memory interface for instruction
+    interface if_fetch {
+        // address, word size, LAU
+        bits = {ADDR_W, WORD_W, LAU_W};
+        endianness = ENDIAN;
+        type = AHB3_LITE:SLAVE;
+        flag = R;
+    };
+
+    // memory interface for data
+    interface if_data {
+        // address, word size, LAU
+        bits = {ADDR_W, WORD_W, LAU_W};
+        endianness = ENDIAN;
+        type = AHB3_LITE:SLAVE;
+        flag = RW;
+    };
+};
+#endif
