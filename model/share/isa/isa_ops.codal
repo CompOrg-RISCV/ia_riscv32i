@@ -228,9 +228,9 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
 
 // Combine the immediate shift instructions that are rtype instructions
 
-DEF_OPC(slli, "slli", RTYPE_SLLI)
-DEF_OPC(srli, "srli", RTYPE_SRLI)
-DEF_OPC(srai, "srai", RTYPE_SRAI)
+DEF_OPC(slli, "slli", IMM_SHIFT_SLLI)
+DEF_OPC(srli, "srli", IMM_SHIFT_SRLI)
+DEF_OPC(srai, "srai", IMM_SHIFT_SRAI)
 
 set opc_shift_imm = opc_slli, opc_srli, opc_srai;
 
