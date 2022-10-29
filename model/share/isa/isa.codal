@@ -46,7 +46,7 @@
 // a complete set of RISCV instructions must be defined.  We us the set operator to combine the separate RISCV
 // instructions into a single set, isa
 set isa = i_rtype_alu,
-    i_rtype_shift,
+    i_shift_imm,
     i_itype_alu,
     i_itype_loads,
     i_stype_store,
@@ -141,8 +141,9 @@ DEF_OPC(srl, "srl", RTYPE_SRL)
 DEF_OPC(sra, "sra", RTYPE_SRA)
 DEF_OPC(or, "or", RTYPE_OR)
 DEF_OPC(and, "and", RTYPE_AND)
+DEF_OPC(mask, "mask", RTYPE_MASK)
 
-set opc_rtype_alu = opc_add, opc_sub, opc_sll, opc_slt, opc_sltu, opc_xor, opc_srl, opc_sra, opc_or, opc_and;
+set opc_rtype_alu = opc_add, opc_sub, opc_sll, opc_slt, opc_sltu, opc_xor, opc_srl, opc_sra, opc_or, opc_and, opc_mask;
 
 element i_rtype_alu           // define the instruction for the rtype arithmetic opcodes
 {
@@ -157,7 +158,7 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
 
     // This statement specifies the textual form of the instruction, which is the instruction's mnemonic name followed
     // by the destination register, the first source registner, and the second source register
-    assembly { opc rd "," rs1 "," rs2};
+    assembly { opc rd ", " rs1 ", " rs2};
 
     // The instructions binary (or machine code format)
     binary { FUNC7(opc) rs2 rs1 FUNC3(opc) rd OPCODE(opc) };
@@ -211,6 +212,9 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
             case RTYPE_AND:
                 result = src1 & src2;
                 break;
+            case RTYPE_MASK:
+                result = ~src1 & src2;
+                break;
             default:
                 result = 0;
 //                eprintf("Default case: %d", opc);
@@ -224,18 +228,18 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
 
 // Combine the immediate shift instructions that are rtype instructions
 
-DEF_OPC(slli, "slli", RTYPE_SLLI)
-DEF_OPC(srli, "srli", RTYPE_SRLI)
-DEF_OPC(srai, "srai", RTYPE_SRAI)
+DEF_OPC(slli, "slli", IMM_SHIFT_SLLI)
+DEF_OPC(srli, "srli", IMM_SHIFT_SRLI)
+DEF_OPC(srai, "srai", IMM_SHIFT_SRAI)
 
-set opc_rtype_shift = opc_slli, opc_srli, opc_srai;
+set opc_shift_imm = opc_slli, opc_srli, opc_srai;
 
-element i_rtype_shift                     // define the instruction for the rtype immediate shift opcodes
+element i_shift_imm                     // define the instruction for the shift immediate opcodes
 {
-    use opc_rtype_shift as opc;
+    use opc_shift_imm as opc;
     use xpr_all as rs1, rd;
     use uimm5 as imm;
-    assembly { opc rd "," rs1 "," imm};
+    assembly { opc rd ", " rs1 ", " imm};
     binary { FUNC7(opc) imm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics
@@ -246,13 +250,13 @@ element i_rtype_shift                     // define the instruction for the rtyp
         immediate = (uint5) imm;
 
         switch (opc) {
-            case RTYPE_SLLI:
+            case IMM_SHIFT_SLLI:
                 result = (uint32)src1 << immediate;
                 break;
-            case RTYPE_SRLI:
+            case IMM_SHIFT_SRLI:
                 result = (uint32)src1 >> immediate;
                 break;
-            case RTYPE_SRAI:
+            case IMM_SHIFT_SRAI:
                 result = ((int32) src1) >> immediate;
                 break;
             default:
@@ -281,7 +285,7 @@ element i_itype_alu
     use opc_itype_alu as opc;
     use xpr_all as rs1, rd;
     use simm12 as simm;
-    assembly { opc rd "," rs1 "," simm};
+    assembly { opc rd ", " rs1 ", " simm};
     binary { simm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics
@@ -339,7 +343,7 @@ element i_itype_loads
     use opc_itype_loads as opc;
     use xpr_all as rs1, rd;
     use simm12 as simm;
-    assembly { opc rd "," simm "(" rs1 ")"};
+    assembly { opc rd ", " simm "(" rs1 ")"};
     binary { simm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics {
@@ -369,7 +373,7 @@ element i_stype_store
     use opc_stype_store as opc;
     use xpr_all as rs1, rs2;
     use simm12 as simm;
-    assembly { opc rs2 "," simm "(" rs1 ")"};
+    assembly { opc rs2 ", " simm "(" rs1 ")"};
     binary { simm[11..5] rs2 rs1 FUNC3(opc) simm[4..0] OPCODE(opc)};
 
     semantics {
@@ -410,7 +414,7 @@ element i_utype_ops
     use opc_utype_ops as opc;
     use xpr_all as rd;
     use uimm20 as imm;
-    assembly { opc rd "," imm};
+    assembly { opc rd ", " imm};
     binary {imm rd opc};
 
     semantics {
@@ -446,7 +450,7 @@ element i_jtype_jlink
     use opc_jtype_jlink as opc;
     use xpr_all as rd;
     use relative_addr20 as simm;
-    assembly { opc rd "," simm};
+    assembly { opc rd ", " simm};
     binary { simm[19..19] simm[9..0] simm[10..10] simm[18..11] rd opc};
 
     semantics {
@@ -474,7 +478,7 @@ element i_itype_jlreg
     use opc_itype_jlreg as opc;
     use xpr_all as rd, rs1;
     use simm12 as simm;
-    assembly { opc rd "," simm "(" rs1 ")"};
+    assembly { opc rd ", " simm "(" rs1 ")"};
     binary { simm  rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics {
@@ -520,7 +524,6 @@ element i_btype_branches
         src1 = rf_xpr_read(rs1);
         src2 = rf_xpr_read(rs2);
 
-//        target_address = read_pc() + (int32)imm - RISCV_INSTR_SIZE;
         target_address = r_pc + (int32)imm - RISCV_INSTR_SIZE;
 
 //
@@ -984,7 +987,7 @@ emulation e_movi32
 
     use i_utype_ops as i_lui0, i_lui1;
     use i_rtype_alu as i_or;
-    use i_rtype_shift as i_srli;
+    use i_shift_imm as i_srli;
 
     unsigned attribute bit[32] imm32;
 
@@ -1020,7 +1023,7 @@ emulation e_movi32
 //
 //    use i_utype_ops as i_lui0, i_lui1;
 //    use i_rtype_alu as i_or;
-//    use i_rtype_shift as i_srli;
+//    use i_imm_shift as i_srli;
 //    use i_itype_jlreg as i_jal_reg;
 //
 //    unsigned attribute bit[32] imm32;
