@@ -226,7 +226,7 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
     };
 };
 
-// Combine the immediate shift instructions that are rtype instructions
+// Combine the immediate shift instructions that are specialized itype set of instructions
 
 DEF_OPC(slli, "slli", IMM_SHIFT_SLLI)
 DEF_OPC(srli, "srli", IMM_SHIFT_SRLI)
