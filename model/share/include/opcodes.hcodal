@@ -91,9 +91,9 @@ enum ITYPE_OPCODES : uint10 {
 // func7(bits(bits 25:31) | func3(bits 12:14) | opcode (bits 0:6)
 // rd = 5-bit immediate
 enum IMM_SHIFT_OPCODES : uint17 {
-    RTYPE_SLLI  = 0b00000000010010011,  // rd = rs1 << imm5
-    RTYPE_SRLI  = 0b00000001010010011,
-    RTYPE_SRAI  = 0b01000001010010011
+    IMM_SHIFT_SLLI  = 0b00000000010010011,  // rd = rs1 >> imm5
+    IMM_SHIFT_SRLI  = 0b00000001010010011,
+    IMM_SHIFT_SRAI  = 0b01000001010010011
 };
 
 
