@@ -88,6 +88,7 @@ enum ITYPE_OPCODES : uint10 {
 };
 
 // Immediate Shift Operations
+// Specialized set of I-Type of instructions
 // func7(bits(bits 25:31) | func3(bits 12:14) | opcode (bits 0:6)
 // rd = 5-bit immediate
 enum IMM_SHIFT_OPCODES : uint17 {
