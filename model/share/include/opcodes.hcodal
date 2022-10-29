@@ -56,6 +56,7 @@ enum BTYPE_OPCODES : uint10 {
 // R-Type 2-argument Opcodes
 // func7(bits(bits 25:31) | func3(bits 12:14) | opcode (bits 0:6)
 enum RTYPE_OPCODES : uint17 {
+    RTYPE_MASK  = 0b11101000000110011,  // rd = rs1 & ~rs2
     RTYPE_ADD   = 0b00000000000110011,
     RTYPE_SUB   = 0b01000000000110011,
     RTYPE_SLL   = 0b00000000010110011,
@@ -65,10 +66,7 @@ enum RTYPE_OPCODES : uint17 {
     RTYPE_SRL   = 0b00000001010110011,
     RTYPE_SRA   = 0b01000001010110011,
     RTYPE_OR    = 0b00000001100110011,
-    RTYPE_AND   = 0b00000001110110011,
-    RTYPE_SLLI  = 0b00000000010010011,
-    RTYPE_SRLI  = 0b00000001010010011,
-    RTYPE_SRAI  = 0b01000001010010011
+    RTYPE_AND   = 0b00000001110110011
 };
 
 // I-Type Immediate Opcodes (format)
@@ -81,13 +79,21 @@ enum ITYPE_OPCODES : uint10 {
     ITYPE_ORI   = 0b1100010011,
     ITYPE_ANDI  = 0b1110010011,
 
-
     ITYPE_JALR  = 0b0001100111,
     ITYPE_LB    = 0b0000000011,
     ITYPE_LH    = 0b0010000011,
     ITYPE_LW    = 0b0100000011,
     ITYPE_LBU   = 0b1000000011,
     ITYPE_LHU   = 0b1010000011
+};
+
+// Immediate Shift Operations
+// func7(bits(bits 25:31) | func3(bits 12:14) | opcode (bits 0:6)
+// rd = 5-bit immediate
+enum IMM_SHIFT_OPCODES : uint17 {
+    RTYPE_SLLI  = 0b00000000010010011,  // rd = rs1 << imm5
+    RTYPE_SRLI  = 0b00000001010010011,
+    RTYPE_SRAI  = 0b01000001010010011
 };
 
 
