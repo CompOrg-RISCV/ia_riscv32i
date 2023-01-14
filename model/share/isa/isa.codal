@@ -158,7 +158,7 @@ element i_rtype_alu           // define the instruction for the rtype arithmetic
 
     // This statement specifies the textual form of the instruction, which is the instruction's mnemonic name followed
     // by the destination register, the first source registner, and the second source register
-    assembly { opc rd ", " rs1 ", " rs2};
+    assembly { opc rd "," rs1 "," rs2};
 
     // The instructions binary (or machine code format)
     binary { FUNC7(opc) rs2 rs1 FUNC3(opc) rd OPCODE(opc) };
@@ -239,7 +239,7 @@ element i_shift_imm                     // define the instruction for the shift 
     use opc_shift_imm as opc;
     use xpr_all as rs1, rd;
     use uimm5 as imm;
-    assembly { opc rd ", " rs1 ", " imm};
+    assembly { opc rd "," rs1 "," imm};
     binary { FUNC7(opc) imm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics
@@ -285,7 +285,7 @@ element i_itype_alu
     use opc_itype_alu as opc;
     use xpr_all as rs1, rd;
     use simm12 as simm;
-    assembly { opc rd ", " rs1 ", " simm};
+    assembly { opc rd "," rs1 "," simm};
     binary { simm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics
@@ -343,7 +343,7 @@ element i_itype_loads
     use opc_itype_loads as opc;
     use xpr_all as rs1, rd;
     use simm12 as simm;
-    assembly { opc rd ", " simm "(" rs1 ")"};
+    assembly { opc rd "," simm "(" rs1 ")"};
     binary { simm rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics {
@@ -373,7 +373,7 @@ element i_stype_store
     use opc_stype_store as opc;
     use xpr_all as rs1, rs2;
     use simm12 as simm;
-    assembly { opc rs2 ", " simm "(" rs1 ")"};
+    assembly { opc rs2 "," simm "(" rs1 ")"};
     binary { simm[11..5] rs2 rs1 FUNC3(opc) simm[4..0] OPCODE(opc)};
 
     semantics {
@@ -414,7 +414,7 @@ element i_utype_ops
     use opc_utype_ops as opc;
     use xpr_all as rd;
     use uimm20 as imm;
-    assembly { opc rd ", " imm};
+    assembly { opc rd "," imm};
     binary {imm rd opc};
 
     semantics {
@@ -450,7 +450,7 @@ element i_jtype_jlink
     use opc_jtype_jlink as opc;
     use xpr_all as rd;
     use relative_addr20 as simm;
-    assembly { opc rd ", " simm};
+    assembly { opc rd "," simm};
     binary { simm[19..19] simm[9..0] simm[10..10] simm[18..11] rd opc};
 
     semantics {
@@ -478,7 +478,7 @@ element i_itype_jlreg
     use opc_itype_jlreg as opc;
     use xpr_all as rd, rs1;
     use simm12 as simm;
-    assembly { opc rd ", " simm "(" rs1 ")"};
+    assembly { opc rd "," simm "(" rs1 ")"};
     binary { simm  rs1 FUNC3(opc) rd OPCODE(opc)};
 
     semantics {
